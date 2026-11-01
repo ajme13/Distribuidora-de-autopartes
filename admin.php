@@ -1,3 +1,51 @@
+<?php
+
+declare(strict_types = 1);
+require_once __DIR__.'/include/index.php';
+require_once 'operaciones.php';
+
+$conexion = new ConexionBD();
+$pdo = $conexion->conectar();
+$repuestos = $conexion = [];
+if($pdo !== null){
+    $repo = new Repuestos($pdo);
+    $repuestos = $repo->listar();
+}
+
+if($pdo !== null){
+    $repo = new Repuestos($pdo);
+    $repuestos = $repo->listar2();
+}
+
+if($_SERVER['REQUEST_METHOD'] === 'POST'){
+    $accion = $_POST['action'] ?? '';
+    if($accion === 'eliminar'){
+        $repo -> eliminar((int)$_POST['id']);
+        header("Location: admin.php");
+        exit;
+    }
+
+    if($accion === 'crear'){
+        $repo -> crear((string)$_POST['nombre'],(string)$_POST['categoria'], (float)$_POST['precio'],(int)$_POST['stock'], (string)$_POST['marca'], (string)$_POST['fotografia']);
+        header("Location: admin.php");
+        exit;
+    }
+
+    if($accion === 'actualizar'){
+        $id         =(int)($_POST['id'] ?? 0);
+        $precio     =(float)($_POST['precio'] ?? 0.0);
+        $stock      =(int)($_POST['stock'] ?? 0);
+        $marca      =(string)($_POST['marca'] ?? 0);
+        $categoria  =(string)($_POST['categoria'] ?? 0);
+        $nombre   =trim((string)($_POST['nombre'] ?? ''));
+        $repo -> actualizar($id, $precio, $stock, $nombre, $marca, $categoria);
+        header("Location: admin.php");
+        exit;
+    }
+}
+
+?>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -93,34 +141,17 @@
                         </thead>
                         <tbody>
                             <!-- Fila de ejemplo 1 -->
+                            <?php foreach($repuestos as $rep): ?> 
                             <tr>
                                 <td>
-                                    <img src="https://via.placeholder.com/60" alt="Foto Repuesto" class="rounded border" width="50" height="50" style="object-fit: cover;">
+                                    <img src="img/<?= $rep['fotografia'] ?>.jpg" alt="Foto Repuesto" class="rounded border" width="50" height="50" style="object-fit: cover;">
                                 </td>
-                                <td><span class="badge bg-secondary">REP-00102</span></td>
-                                <td class="fw-bold">Pastillas de Freno Cerámicas</td>
-                                <td><span class="badge bg-info text-dark">Frenos y Suspensión</span></td>
-                                <td>Toyota Hilux (2016-2022)</td>
-                                <td class="fw-bold text-success">L. 1,250.00</td>
-                                <td><span class="badge bg-success">24 unids</span></td>
-                                <td class="text-center">
-                                    <div class="btn-group btn-group-sm" role="group">
-                                        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalEditar" title="Editar"><i class="fa-solid fa-pen-to-square"></i></button>
-                                        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#modalEliminar" title="Eliminar"><i class="fa-solid fa-trash-can"></i></button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <!-- Fila de ejemplo 2 (Stock bajo) -->
-                            <tr>
-                                <td>
-                                    <img src="https://via.placeholder.com/60" alt="Foto Repuesto" class="rounded border" width="50" height="50" style="object-fit: cover;">
-                                </td>
-                                <td><span class="badge bg-secondary">REP-00455</span></td>
-                                <td class="fw-bold">Filtro de Aceite Sintético</td>
-                                <td><span class="badge bg-warning text-dark">Fluidos y Lubricantes</span></td>
-                                <td>Nissan Frontier D22</td>
-                                <td class="fw-bold text-success">L. 320.00</td>
-                                <td><span class="badge bg-danger">3 unids (Bajo)</span></td>
+                                <td><span class="badge bg-secondary"><?= $rep['id'] ?></span></td>
+                                <td class="fw-bold"><?= $rep['nombre'] ?></td>
+                                <td><span class="badge bg-info text-dark"><?= $rep['categoria'] ?></span></td>
+                                <td><?= $rep['marca'] ?></td>
+                                <td class="fw-bold text-success">L. <?= $rep['precio'] ?></td>
+                                <td><span class="badge bg-success"><?= $rep['stock'] ?> unids</span></td>
                                 <td class="text-center">
                                     <div class="btn-group btn-group-sm" role="group">
                                         <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalEditar" title="Editar"><i class="fa-solid fa-pen-to-square"></i></button>
@@ -129,6 +160,7 @@
                                 </td>
                             </tr>
                         </tbody>
+                        <?php endforeach; ?>
                     </table>
                 </div>
             </div>
