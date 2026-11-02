@@ -31,7 +31,7 @@ class Repuestos{
     }
 
     public function crear(string $nombre, string $categoria, float $precio, int $stock, string $marca, string $fotografia): int{
-        $sql = "INSERT INTO productos(nombre, categoria, precio, stock, marca, fotografia)
+        $sql = "INSERT INTO repuestos(nombre, categoria, precio, stock, marca, fotografia)
                 VALUES (:nombre, :categoria, :precio, :stock, :marca, :fotografia)";
 
         $stmt = $this -> pdo ->prepare($sql);
@@ -46,9 +46,9 @@ class Repuestos{
         return (int)$this ->pdo ->lastInsertId();
     }
 
-    public function actualizar(int $id, float $nuevo_precio,int $nuevo_stock, string $nuevo_nombre, string $nueva_marca, string $nueva_categoria): bool{
+    public function actualizar(int $id, float $nuevo_precio,int $nuevo_stock, string $nuevo_nombre, string $nueva_marca, string $nueva_categoria, string $nueva_fotografia): bool{
         $sql = "UPDATE repuestos
-                SET precio = :precio, stock = :stk, nombre = :nombre
+                SET precio = :precio, stock = :stk, nombre = :nombre, categoria = :categoria, fotografia = :fotografia, marca = :marca
                 WHERE id = :id";
         
         $stmt = $this -> pdo -> prepare($sql);
@@ -58,7 +58,8 @@ class Repuestos{
             ':id' => $id,
             ':nombre' => $nuevo_nombre,
             ':marca' => $nueva_marca,
-            ':categoria' => $nueva_categoria
+            ':categoria' => $nueva_categoria,
+            ':fotografia' => $nueva_fotografia
         ]);
                 
     }

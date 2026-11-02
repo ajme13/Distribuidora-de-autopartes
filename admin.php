@@ -18,7 +18,7 @@ if($pdo !== null){
 }
 
 if($_SERVER['REQUEST_METHOD'] === 'POST'){
-    $accion = $_POST['action'] ?? '';
+    $accion = $_POST['accion'] ?? '';
     if($accion === 'eliminar'){
         $repo -> eliminar((int)$_POST['id']);
         header("Location: admin.php");
@@ -32,13 +32,14 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'){
     }
 
     if($accion === 'actualizar'){
-        $id         =(int)($_POST['id'] ?? 0);
-        $precio     =(float)($_POST['precio'] ?? 0.0);
-        $stock      =(int)($_POST['stock'] ?? 0);
-        $marca      =(string)($_POST['marca'] ?? 0);
-        $categoria  =(string)($_POST['categoria'] ?? 0);
+        $id             =(int)($_POST['id'] ?? 0);
+        $precio         =(float)($_POST['precio'] ?? 0.0);
+        $stock          =(int)($_POST['stock'] ?? 0);
+        $marca          =(string)($_POST['marca'] ?? 0);
+        $fotografia     =(string)($_POST['fotografia'] ?? 0);
+        $categoria      =(string)($_POST['categoria'] ?? 0);
         $nombre   =trim((string)($_POST['nombre'] ?? ''));
-        $repo -> actualizar($id, $precio, $stock, $nombre, $marca, $categoria);
+        $repo -> actualizar($id, $precio, $stock, $nombre, $marca, $categoria, $fotografia);
         header("Location: admin.php");
         exit;
     }
@@ -154,8 +155,24 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'){
                                 <td><span class="badge bg-success"><?= $rep['stock'] ?> unids</span></td>
                                 <td class="text-center">
                                     <div class="btn-group btn-group-sm" role="group">
-                                        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalEditar" title="Editar"><i class="fa-solid fa-pen-to-square"></i></button>
-                                        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#modalEliminar" title="Eliminar"><i class="fa-solid fa-trash-can"></i></button>
+
+                                        <button type="button" 
+                                            class="btn-editar"
+                                            data-id="<?= $rep['id'] ?>"
+                                            data-nombre="<?= $rep['nombre'] ?>"
+                                            data-precio="<?= $rep['precio'] ?>"
+                                            data-stock="<?= $rep['stock'] ?>"
+                                            data-marca="<?= $rep['marca'] ?>"
+                                            data-categoria="<?= $rep['categoria'] ?>"
+                                        >Editar
+                                        </button>
+                                        
+                                        
+                                        <form method="POST" action="admin.php" onsubmit="return confirm('Desea Eliminar el Producto');">
+                                            <input type="hidden" name="accion" value="eliminar">
+                                            <input type="hidden" name="id" value="<?=$rep['id'] ?>">
+                                            <button type="submit">Eliminar</button>
+                                        </form>
                                     </div>
                                 </td>
                             </tr>
@@ -176,25 +193,29 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'){
                     <h5 class="modal-title fw-bold" id="modalRegistroLabel"><i class="fa-solid fa-plus-circle me-2"></i>Registrar Nueva Autoparte</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <form action="procesar_guardar.php" method="POST" enctype="multipart/form-data">
+
+                <form action="admin.php" method="POST" enctype="multipart/form-data">
                     <div class="modal-body row g-3">
                         <div class="col-md-6">
+
+                            <input type="hidden" name="accion" value="crear">
                             <label class="form-label fw-bold">Nombre del Repuesto</label>
                             <input type="text" class="form-control" name="nombre" placeholder="Ej: Bujía de Iridio" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold">Categoría</label>
-                            <select class="form-select" name="categoria_id" required>
+                            <select class="form-select" name="categoria" required>
                                 <option value="" disabled selected>Seleccione...</option>
-                                <option value="1">Frenos y Suspensión</option>
-                                <option value="2">Motor y Transmisión</option>
-                                <option value="3">Sistema Eléctrico</option>
-                                <option value="4">Fluidos y Lubricantes</option>
+                                <option value="Frenos y Suspensión">Frenos y Suspensión</option>
+                                <option value="Motor y Transmisión">Motor y Transmisión</option>
+                                <option value="Sistema Eléctrico">Sistema Eléctrico</option>
+                                <option value="Fluidos y Lubricantes">Fluidos y Lubricantes</option>
                             </select>
                         </div>
+
                         <div class="col-md-6">
                             <label class="form-label fw-bold">Marca / Vehículo Compatible</label>
-                            <input type="text" class="form-control" name="compatibilidad" placeholder="Ej: Honda Civic 2018+" required>
+                            <input type="text" class="form-control" name="marca" placeholder="Ej: Honda Civic 2018+" required>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label fw-bold">Precio (LPS)</label>
@@ -204,14 +225,11 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'){
                             <label class="form-label fw-bold">Stock Inicial</label>
                             <input type="number" class="form-control" name="stock" placeholder="0" required>
                         </div>
-                        <div class="col-12">
-                            <label class="form-label fw-bold">Especificaciones / Descripción</label>
-                            <textarea class="form-control" name="descripcion" rows="2" placeholder="Detalles técnicos de la autoparte..."></textarea>
-                        </div>
+                        
                         <!-- Subida segura de archivos (JPG/PNG/WEBP) -->
                         <div class="col-12">
                             <label class="form-label fw-bold">Fotografía del Repuesto (JPG, PNG, WEBP)</label>
-                            <input type="file" class="form-control" name="imagen" accept=".jpg,.jpeg,.png,.webp" required>
+                            <input type="file" class="form-control" name="fotografia" accept=".jpg,.jpeg,.png,.webp">
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -224,44 +242,49 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'){
     </div>
 
     <!-- MODAL 2: EDICIÓN DINÁMICA DE AUTOPARTE -->
-    <div class="modal fade" id="modalEditar" tabindex="-1" aria-labelledby="modalEditarLabel" aria-hidden="true">
+    <!-- <div class="modal fade" id="modalEditar" tabindex="-1" aria-labelledby="modalEditarLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title fw-bold" id="modalEditarLabel"><i class="fa-solid fa-pen-to-square me-2"></i>Editar Autoparte</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <form action="procesar_actualizar.php" method="POST" enctype="multipart/form-data">
-                    <input type="hidden" name="id" value="102">
+
+                <form action="admin.php" method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="accion" value="actualizar">
+                    <input type="hidden" name="id" id="edit_id">
+
                     <div class="modal-body row g-3">
                         <div class="col-md-6">
+
                             <label class="form-label fw-bold">Nombre del Repuesto</label>
-                            <input type="text" class="form-control" name="nombre" value="Pastillas de Freno Cerámicas" required>
+                            <input type="text" class="form-control" name="nombre" id="edit_nombre">
                         </div>
                         <div class="col-md-6">
+
                             <label class="form-label fw-bold">Categoría</label>
-                            <select class="form-select" name="categoria_id" required>
-                                <option value="1" selected>Frenos y Suspensión</option>
-                                <option value="2">Motor y Transmisión</option>
-                                <option value="3">Sistema Eléctrico</option>
-                                <option value="4">Fluidos y Lubricantes</option>
+                            <select class="form-select" name="categoria" id="edit_categoria">
+                                <option value="Frenos y Suspensión" selected>Frenos y Suspensión</option>
+                                <option value="Motor y Transmisión">Motor y Transmisión</option>
+                                <option value="Sistema Eléctrico">Sistema Eléctrico</option>
+                                <option value="Fluidos y Lubricantes">Fluidos y Lubricantes</option>
                             </select>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold">Marca / Vehículo Compatible</label>
-                            <input type="text" class="form-control" name="compatibilidad" value="Toyota Hilux (2016-2022)" required>
+                            <input type="text" class="form-control" name="marca" id="edit_marca">
                         </div>
                         <div class="col-md-3">
                             <label class="form-label fw-bold">Precio (LPS)</label>
-                            <input type="number" step="0.01" class="form-control" name="precio" value="1250.00" required>
+                            <input type="number" step="0.01" class="form-control" name="precio" id="edit_precio">
                         </div>
                         <div class="col-md-3">
                             <label class="form-label fw-bold">Stock</label>
-                            <input type="number" class="form-control" name="stock" value="24" required>
+                            <input type="number" class="form-control" name="stock" id="edit_stock">
                         </div>
                         <div class="col-12">
                             <label class="form-label fw-bold">Reemplazar Fotografía (Opcional)</label>
-                            <input type="file" class="form-control" name="imagen" accept=".jpg,.jpeg,.png,.webp">
+                            <input type="file" class="form-control" name="fotografia" id="edit_fotografia" accept=".jpg,.jpeg,.png,.webp">
                             <span class="form-text text-muted">Dejar en blanco si no deseas cambiar la imagen actual.</span>
                         </div>
                     </div>
@@ -272,32 +295,66 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'){
                 </form>
             </div>
         </div>
-    </div>
+    </div> -->
 
-    <!-- MODAL 3: CONFIRMACIÓN DE ELIMINACIÓN -->
-    <div class="modal fade" id="modalEliminar" tabindex="-1" aria-labelledby="modalEliminarLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title fw-bold" id="modalEliminarLabel"><i class="fa-solid fa-triangle-exclamation me-2"></i>Confirmar Eliminación</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p>¿Estás seguro de que deseas eliminar la autoparte <strong class="text-danger">"Pastillas de Freno Cerámicas"</strong>?</p>
-                    <p class="small text-muted m-0">Esta acción deshabilitará el repuesto del catálogo visualizable por los clientes.</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <form action="procesar_eliminar.php" method="POST" class="d-inline">
-                        <input type="hidden" name="id" value="102">
-                        <button type="submit" class="btn btn-danger fw-bold"><i class="fa-solid fa-trash-can me-1"></i> Sí, Eliminar</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
+    <dialog id="modalEditar">
+    <h2>Actualizar Producto</h2>
+    <form method="POST" action="admin.php">
+        <input type="hidden" name="accion" value="actualizar">
+        <input type="hidden" name="id" id="edit_id">
+
+        <label class="form-label fw-bold">Nombre del Repuesto</label>
+        <input type="text" name="nombre" id="edit_nombre"><br><br>
+
+        <label class="form-label fw-bold">Categoría</label>
+        <select class="form-select" name="categoria" id="edit_categoria">
+            <option value="Frenos y Suspensión" selected>Frenos y Suspensión</option>
+            <option value="Motor y Transmisión">Motor y Transmisión</option>
+            <option value="Sistema Eléctrico">Sistema Eléctrico</option>
+            <option value="Fluidos y Lubricantes">Fluidos y Lubricantes</option>
+        </select><br><br>
+
+        <label class="form-label fw-bold">Marca / Vehículo Compatible</label>
+        <input type="text" class="form-control" name="marca" id="edit_marca"><br><br>
+
+        <label class="form-label fw-bold">Precio (LPS)</label>
+        <input type="number" step="0.01" class="form-control" name="precio" id="edit_precio"> <br><br>
+
+        <label class="form-label fw-bold">Stock</label>
+        <input type="number" class="form-control" name="stock" id="edit_stock"> <br><br>
+
+
+        <button type="submit">Actualizar Cambios</button>
+        <button type="button" onclick="document.getElementById('modalEditar').close();">Cancelar</button>
+    </form>
+</dialog>
+
+    
 
     <!-- Bootstrap 5 JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
+<script>
+    const modalEditar = document.getElementById('modalEditar');
+    document.querySelectorAll('.btn-editar').forEach(boton => {
+        boton.addEventListener('click', () => {
+            const id = boton.dataset.id;
+            const nombre = boton.dataset.nombre;
+            const precio = boton.dataset.precio;
+            const stock = boton.dataset.stock;
+            const marca = boton.dataset.marca;
+            const categoria = boton.dataset.categoria;
+
+            document.getElementById('edit_id').value = id;
+            document.getElementById('edit_nombre').value = nombre;
+            document.getElementById('edit_precio').value = precio;
+            document.getElementById('edit_stock').value = stock;
+            document.getElementById('edit_marca').value = marca;
+            document.getElementById('edit_categoria').value = categoria;
+            modalEditar.showModal();
+
+        });
+    });
+</script>
